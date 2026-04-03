@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include <XPowersLib.h>
 #include <lvgl.h>
+#include "icons/fan_fill_64.c"
 
 XPowersAXP2101 PMU;
 
@@ -104,16 +105,14 @@ void setup()
     lv_obj_set_style_radius(bg, 0, 0);                        // Remove corner radius
     lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF);     // Remove scrollbar (right-side line)
 
-    lv_obj_t *label = lv_label_create(bg);
-    lv_obj_set_style_text_color(label, lv_color_hex(0x00FF00), 0); // Green text
-    lv_label_set_text(label, "LVGL Pipeline: SUCCESS");
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, -20);
-
-    lv_obj_t *btn = lv_btn_create(bg);
-    lv_obj_align(btn, LV_ALIGN_CENTER, 0, 20);
-    lv_obj_t *btn_label = lv_label_create(btn);
-    lv_label_set_text(btn_label, "Waveshare S3");
-    lv_obj_center(btn_label);
+    // Render the fan icon
+    lv_obj_t *fan_img = lv_img_create(bg);
+    lv_img_set_src(fan_img, &fan_fill_64);
+    // Since it's an alpha mask, we should colorize it so it isn't invisible against the black bg
+    lv_obj_set_style_img_recolor_opa(fan_img, LV_OPA_COVER, 0);
+    lv_obj_set_style_img_recolor(fan_img, lv_color_hex(0xFFFFFF), 0);
+    lv_img_set_zoom(fan_img, 256);
+    lv_obj_align(fan_img, LV_ALIGN_CENTER, 0, 0);
 }
 
 void loop()

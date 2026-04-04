@@ -129,7 +129,7 @@ void setup()
     lv_obj_t *step_arc = lv_arc_create(bg);
     lv_obj_set_size(step_arc, 466 - 2 * 21, 466 - 2 * 21);
     lv_obj_align(step_arc, LV_ALIGN_CENTER, 0, 0);
-    lv_arc_set_bg_angles(step_arc, 90 + 45, 90 - 45);
+    lv_arc_set_bg_angles(step_arc, 90, 270);
     lv_arc_set_range(step_arc, 0, 100);
 
     // Disable interaction and remove the ugly default knob
@@ -143,6 +143,15 @@ void setup()
     lv_obj_set_style_arc_rounded(step_arc, true, LV_PART_INDICATOR);
 
     set_arc_value(step_arc, 100);
+    /*lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, step_arc);
+    lv_anim_set_exec_cb(&a, set_arc_value);
+    lv_anim_set_values(&a, 0, 100);
+    lv_anim_set_time(&a, 3000);
+    lv_anim_set_playback_time(&a, 3000);
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a);*/
 }
 
 void loop()

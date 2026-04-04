@@ -59,6 +59,11 @@ void my_disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *c
     lv_disp_flush_ready(disp_drv);
 }
 
+void set_arc_value(void *obj, int32_t v)
+{
+    lv_arc_set_value((lv_obj_t *)obj, v);
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -112,14 +117,32 @@ void setup()
     lv_obj_align(fan_img, LV_ALIGN_CENTER, 0, 0);
 
     // Rotation animation
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, fan_img);
-    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
-    lv_anim_set_values(&a, 0, 3600); // clockwise: (0, 3600); anti-clockwise: (3600, 0)
-    lv_anim_set_time(&a, 3000);      // full rotation in 3 seconds
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_start(&a);
+    // lv_anim_t a;
+    // lv_anim_init(&a);
+    // lv_anim_set_var(&a, fan_img);
+    // lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
+    // lv_anim_set_values(&a, 0, 3600); // clockwise: (0, 3600); anti-clockwise: (3600, 0)
+    // lv_anim_set_time(&a, 3000);      // full rotation in 3 seconds
+    // lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    // lv_anim_start(&a);
+
+    lv_obj_t *step_arc = lv_arc_create(bg);
+    lv_obj_set_size(step_arc, 466 - 2 * 21, 466 - 2 * 21);
+    lv_obj_align(step_arc, LV_ALIGN_CENTER, 0, 0);
+    lv_arc_set_bg_angles(step_arc, 90 + 45, 90 - 45);
+    lv_arc_set_range(step_arc, 0, 100);
+
+    // Disable interaction and remove the ugly default knob
+    lv_obj_clear_flag(step_arc, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_remove_style(step_arc, NULL, LV_PART_KNOB);
+
+    lv_obj_set_style_arc_width(step_arc, 40, LV_PART_MAIN);
+    lv_obj_set_style_arc_opa(step_arc, 0, LV_PART_MAIN);
+    lv_obj_set_style_arc_width(step_arc, 40, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(step_arc, lv_color_hex(0x222222), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_rounded(step_arc, true, LV_PART_INDICATOR);
+
+    set_arc_value(step_arc, 100);
 }
 
 void loop()

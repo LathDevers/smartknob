@@ -20,23 +20,21 @@ XPowersAXP2101 PMU;
 #define LCD_SDIO3 7
 #define LCD_RST 39
 
-// Fix the GFX library bounds AND expand the canvas to allow hardware offsets
 class Waveshare_CO5300 : public Arduino_CO5300
 {
 public:
     Waveshare_CO5300(Arduino_DataBus *bus, int8_t rst)
-        : Arduino_CO5300(bus, rst, 0 /* rotation */, false /* IPS */) {}
+        : Arduino_CO5300(bus, rst, 0, false /* invert */, 480, 480, 0U, 0U, 0U, 0U) {}
 
     bool begin(int32_t speed = GFX_NOT_DEFINED) override
     {
         bool res = Arduino_CO5300::begin(speed);
-        // Lock the bounds strictly to the 466x466 physical pixels
-        _width = 466;
-        _height = 466;
-        _max_x = 465;
-        _max_y = 465;
-        WIDTH = 466;
-        HEIGHT = 466;
+        _width = 480;
+        _height = 480;
+        _max_x = 479;
+        _max_y = 479;
+        WIDTH = 480;
+        HEIGHT = 480;
         return res;
     }
 };
@@ -53,7 +51,11 @@ void my_disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_t *c
     uint32_t w = (area->x2 - area->x1 + 1);
     uint32_t h = (area->y2 - area->y1 + 1);
 
-    gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)color_p, w, h);
+    // Inject the factory bonding offsets directly into the GRAM push
+    uint16_t offset_x = 5;
+    uint16_t offset_y = 2;
+
+    gfx->draw16bitRGBBitmap(area->x1 + offset_x, area->y1 + offset_y, (uint16_t *)color_p, w, h);
     lv_disp_flush_ready(disp_drv);
 }
 
@@ -76,7 +78,7 @@ void setup()
 
     gfx->begin();
 
-    // Wipe the 466x466 GRAM buffer to kill the static noise
+    // Wipe the GRAM buffer
     gfx->fillScreen(BLACK);
 
     // Fire up LVGL
@@ -95,15 +97,14 @@ void setup()
     disp_drv.draw_buf = &draw_buf;
     lv_disp_drv_register(&disp_drv);
 
-    // Draw a clean UI to prove the pipeline is flawless
     lv_obj_t *bg = lv_obj_create(lv_scr_act());
     lv_obj_set_size(bg, 466, 466);
     lv_obj_set_pos(bg, 0, 0);
-    lv_obj_set_style_bg_color(bg, lv_color_black(), 0);   // Black background
-    lv_obj_set_style_border_width(bg, 0, 0);              // Remove default theme border (white lines)
-    lv_obj_set_style_pad_all(bg, 0, 0);                   // Remove default padding
-    lv_obj_set_style_radius(bg, 0, 0);                    // Remove corner radius
-    lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF); // Remove scrollbar (right-side line)
+    lv_obj_set_style_bg_color(bg, lv_color_black(), 0);
+    lv_obj_set_style_border_width(bg, 0, 0);
+    lv_obj_set_style_pad_all(bg, 0, 0);
+    lv_obj_set_style_radius(bg, 0, 0);
+    lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF);
 
     // Render the fan icon
     lv_obj_t *fan_img = lv_img_create(bg);

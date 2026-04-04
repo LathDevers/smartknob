@@ -3,7 +3,7 @@
 #include <Wire.h>
 #include <XPowersLib.h>
 #include <lvgl.h>
-#include "icons/fan_fill_64.c"
+#include "icons/fan_fill_100.c"
 
 XPowersAXP2101 PMU;
 
@@ -99,19 +99,17 @@ void setup()
     lv_obj_t *bg = lv_obj_create(lv_scr_act());
     lv_obj_set_size(bg, 466, 466);
     lv_obj_set_pos(bg, 0, 0);
-    lv_obj_set_style_bg_color(bg, lv_color_hex(0x000000), 0); // Black background
-    lv_obj_set_style_border_width(bg, 0, 0);                  // Remove default theme border (white lines)
-    lv_obj_set_style_pad_all(bg, 0, 0);                       // Remove default padding
-    lv_obj_set_style_radius(bg, 0, 0);                        // Remove corner radius
-    lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF);     // Remove scrollbar (right-side line)
+    lv_obj_set_style_bg_color(bg, lv_color_black(), 0);   // Black background
+    lv_obj_set_style_border_width(bg, 0, 0);              // Remove default theme border (white lines)
+    lv_obj_set_style_pad_all(bg, 0, 0);                   // Remove default padding
+    lv_obj_set_style_radius(bg, 0, 0);                    // Remove corner radius
+    lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF); // Remove scrollbar (right-side line)
 
     // Render the fan icon
     lv_obj_t *fan_img = lv_img_create(bg);
-    lv_img_set_src(fan_img, &fan_fill_64);
-    // Since it's an alpha mask, we should colorize it so it isn't invisible against the black bg
+    lv_img_set_src(fan_img, &fan_fill_100);
     lv_obj_set_style_img_recolor_opa(fan_img, LV_OPA_COVER, 0);
-    lv_obj_set_style_img_recolor(fan_img, lv_color_hex(0xFFFFFF), 0);
-    lv_img_set_zoom(fan_img, 256);
+    lv_obj_set_style_img_recolor(fan_img, lv_color_white(), 0);
     lv_obj_align(fan_img, LV_ALIGN_CENTER, 0, 0);
 }
 

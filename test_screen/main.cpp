@@ -109,13 +109,27 @@ void setup()
     // Render the fan icon
     lv_obj_t *fan_img = lv_img_create(bg);
     lv_img_set_src(fan_img, &fan_fill_100);
-    lv_obj_set_style_img_recolor_opa(fan_img, LV_OPA_COVER, 0);
-    lv_obj_set_style_img_recolor(fan_img, lv_color_white(), 0);
     lv_obj_align(fan_img, LV_ALIGN_CENTER, 0, 0);
+
+    // Rotation animation
+    lv_anim_t a;
+    lv_anim_init(&a);
+    lv_anim_set_var(&a, fan_img);
+    lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
+    lv_anim_set_values(&a, 0, 3600); // clockwise: (0, 3600); anti-clockwise: (3600, 0)
+    lv_anim_set_time(&a, 3000);      // full rotation in 3 seconds
+    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+    lv_anim_start(&a);
 }
 
 void loop()
 {
+    static uint32_t last_tick = 0;
+    uint32_t current_tick = millis();
+
+    lv_tick_inc(current_tick - last_tick);
+    last_tick = current_tick;
+
     lv_timer_handler();
     delay(5);
 }

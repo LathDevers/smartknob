@@ -94,14 +94,10 @@ struct KnobConfig
     uint32_t color;
 };
 
-static KnobConfig configs[] = {
-    {0, 0, 6, 30 * PI / 180, 5, 1.1, "Test screen", {}, 0, 0x000000},
-};
-static const int NUM_CONFIGS = sizeof(configs) / sizeof(configs[0]);
+static KnobConfig config = {0, 0, 6, 30 * PI / 180, 5, 1.1, "Test screen", {}, 0, 0x000000};
 
 // ── Virtual knob state ──
 
-static int current_config_idx = 0;
 static int32_t knob_position = 0;
 static float knob_sub_position = 0;
 
@@ -149,11 +145,9 @@ static float clampf(float v, float lo, float hi)
 
 // ── Apply config ──
 
-static void apply_config(int idx)
+static void apply_config()
 {
-    current_config_idx = idx;
-    KnobConfig &cfg = configs[idx];
-    knob_position = cfg.position;
+    knob_position = config.position;
     knob_sub_position = 0;
     angle_accumulator = 0;
 }
@@ -162,9 +156,8 @@ static void apply_config(int idx)
 
 static void update_ui()
 {
-    KnobConfig &cfg = configs[current_config_idx];
-    int32_t num_positions = cfg.max_position - cfg.min_position + 1;
-    bool bounded = cfg.max_position >= cfg.min_position;
+    int32_t num_positions = config.max_position - config.min_position + 1;
+    bool bounded = config.max_position >= config.min_position;
 
     // Position label
     char pos_buf[16];
@@ -172,17 +165,17 @@ static void update_ui()
     lv_label_set_text(position_label, pos_buf);
 
     // Config label
-    lv_label_set_text(config_label, cfg.text);
+    lv_label_set_text(config_label, config.text);
 
     // Background color tint
-    uint32_t c = cfg.color;
+    uint32_t c = config.color;
     lv_obj_set_style_bg_color(bg, lv_color_hex(c), 0);
 
     // Indicator arc: shows position within range
     if (bounded && num_positions > 1)
     {
         lv_obj_clear_flag(indicator_arc, LV_OBJ_FLAG_HIDDEN);
-        int32_t progress = (knob_position - cfg.min_position) * 100 / (cfg.max_position - cfg.min_position);
+        int32_t progress = (knob_position - config.min_position) * 100 / (config.max_position - config.min_position);
         lv_arc_set_value(indicator_arc, progress);
     }
     else
@@ -194,22 +187,22 @@ static void update_ui()
     float left_bound = PI / 2;
     if (bounded)
     {
-        float range_radians = (cfg.max_position - cfg.min_position) * cfg.position_width_radians;
+        float range_radians = (config.max_position - config.min_position) * config.position_width_radians;
         left_bound = PI / 2 + range_radians / 2;
     }
-    float raw_angle = left_bound - (knob_position - cfg.min_position) * cfg.position_width_radians;
+    float raw_angle = left_bound - (knob_position - config.min_position) * config.position_width_radians;
 
     // Rubber-band sub-position at bounds
-    float adjusted_sub = knob_sub_position * cfg.position_width_radians;
+    float adjusted_sub = knob_sub_position * config.position_width_radians;
     if (bounded)
     {
-        if (knob_position == cfg.min_position && knob_sub_position < 0)
+        if (knob_position == config.min_position && knob_sub_position < 0)
         {
-            adjusted_sub = -logf(1 - knob_sub_position * cfg.position_width_radians / 5 / PI * 180) * 5 * PI / 180;
+            adjusted_sub = -logf(1 - knob_sub_position * config.position_width_radians / 5 / PI * 180) * 5 * PI / 180;
         }
-        else if (knob_position == cfg.max_position && knob_sub_position > 0)
+        else if (knob_position == config.max_position && knob_sub_position > 0)
         {
-            adjusted_sub = logf(1 + knob_sub_position * cfg.position_width_radians / 5 / PI * 180) * 5 * PI / 180;
+            adjusted_sub = logf(1 + knob_sub_position * config.position_width_radians / 5 / PI * 180) * 5 * PI / 180;
         }
     }
     float display_angle = raw_angle - adjusted_sub;
@@ -226,8 +219,7 @@ static void update_ui()
 
 static void process_touch(int16_t x, int16_t y, bool pressed)
 {
-    KnobConfig &cfg = configs[current_config_idx];
-    bool bounded = cfg.max_position >= cfg.min_position;
+    bool bounded = config.max_position >= config.min_position;
 
     if (pressed && !touch_active)
     {
@@ -271,23 +263,23 @@ static void process_touch(int16_t x, int16_t y, bool pressed)
             // Accumulate angle delta, scaled by position width
             angle_accumulator += delta * sensitivity;
 
-            float positions_moved = angle_accumulator / cfg.position_width_radians;
+            float positions_moved = angle_accumulator / config.position_width_radians;
 
-            if (cfg.detent_strength_unit > 0)
+            if (config.detent_strength_unit > 0)
             {
                 // Detented mode: snap to integer positions
                 int32_t steps = (int32_t)positions_moved;
                 if (steps != 0)
                 {
                     knob_position -= steps;
-                    angle_accumulator -= steps * cfg.position_width_radians;
+                    angle_accumulator -= steps * config.position_width_radians;
 
                     if (bounded)
                     {
-                        knob_position = max(cfg.min_position, min(cfg.max_position, knob_position));
+                        knob_position = max(config.min_position, min(config.max_position, knob_position));
                     }
                 }
-                knob_sub_position = -angle_accumulator / cfg.position_width_radians;
+                knob_sub_position = -angle_accumulator / config.position_width_radians;
             }
             else
             {
@@ -296,21 +288,21 @@ static void process_touch(int16_t x, int16_t y, bool pressed)
                 if (steps != 0)
                 {
                     knob_position -= steps;
-                    angle_accumulator -= steps * cfg.position_width_radians;
+                    angle_accumulator -= steps * config.position_width_radians;
                 }
-                knob_sub_position = -angle_accumulator / cfg.position_width_radians;
+                knob_sub_position = -angle_accumulator / config.position_width_radians;
 
                 if (bounded)
                 {
-                    if (knob_position < cfg.min_position)
+                    if (knob_position < config.min_position)
                     {
-                        knob_position = cfg.min_position;
+                        knob_position = config.min_position;
                         if (knob_sub_position < 0)
                             knob_sub_position = clampf(knob_sub_position, -3.0f, 0);
                     }
-                    if (knob_position > cfg.max_position)
+                    if (knob_position > config.max_position)
                     {
-                        knob_position = cfg.max_position;
+                        knob_position = config.max_position;
                         if (knob_sub_position > 0)
                             knob_sub_position = clampf(knob_sub_position, 0, 3.0f);
                     }
@@ -334,7 +326,7 @@ static void process_touch(int16_t x, int16_t y, bool pressed)
             if (dx * dx + dy * dy < 120 * 120)
             {
                 // Center tap: cycle config
-                apply_config((current_config_idx + 1) % NUM_CONFIGS);
+                apply_config();
             }
         }
 
@@ -390,6 +382,7 @@ static void create_ui()
     lv_obj_set_style_pad_all(bg, 0, 0);
     lv_obj_set_style_radius(bg, 0, 0);
     lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF);
+    lv_obj_clear_flag(bg, LV_OBJ_FLAG_SCROLLABLE);
 
     // Indicator arc (shows position progress)
     indicator_arc = lv_arc_create(bg);
@@ -503,7 +496,7 @@ void setup()
     create_ui();
 
     // Apply first config
-    apply_config(0);
+    apply_config();
     update_ui();
 
     Serial.println("SmartKnob Touch ready!");
@@ -522,7 +515,6 @@ void loop()
     if (idx_label)
     {
         char buf[32];
-        snprintf(buf, sizeof(buf), "%d / %d", current_config_idx + 1, NUM_CONFIGS);
         lv_label_set_text(idx_label, buf);
     }
 

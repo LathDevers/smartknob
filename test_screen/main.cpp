@@ -29,6 +29,24 @@
 static const int SCREEN_SIZE = 466;
 static const int CENTER = SCREEN_SIZE / 2;
 
+static const struct {
+    lv_color_t white = lv_color_white();
+    lv_color_t black = lv_color_black();
+    lv_color_t gray  = lv_color_hex(0x333333);
+    lv_color_t red = lv_color_hex(0xFF383C);
+    lv_color_t orange = lv_color_hex(0xFF8D28);
+    lv_color_t yellow = lv_color_hex(0xFFCC00);
+    lv_color_t green = lv_color_hex(0x34C759);
+    lv_color_t mint = lv_color_hex(0x00C8B3);
+    lv_color_t teal = lv_color_hex(0x00C3D0);
+    lv_color_t cyan = lv_color_hex(0x00C0E8);
+    lv_color_t blue = lv_color_hex(0x0088FF);
+    lv_color_t indigo = lv_color_hex(0x6155F5);
+    lv_color_t purple = lv_color_hex(0xCB30E0);
+    lv_color_t pink = lv_color_hex(0xFF2D55);
+    lv_color_t brown = lv_color_hex(0xAC7F5E);
+} LV_COLORS;
+
 // ── Hardware objects ──
 
 XPowersAXP2101 PMU;
@@ -77,17 +95,7 @@ struct KnobConfig
 };
 
 static KnobConfig configs[] = {
-    {0, 0, -1, 10 * PI / 180, 0, 1.1, "Unbounded\nNo detents", {}, 0, 0x6B12A0},
-    {0, 0, 10, 10 * PI / 180, 0, 1.1, "Bounded 0-10\nNo detents", {}, 0, 0x1A5276},
-    {0, 0, 72, 10 * PI / 180, 0, 1.1, "Multi-rev\nNo detents", {}, 0, 0x1E8449},
-    {0, 0, 1, 60 * PI / 180, 1, 0.55, "On/Off\nStrong detent", {}, 0, 0xA93226},
-    {0, 0, 0, 60 * PI / 180, 0.01, 1.1, "Return-to-center", {}, 0, 0xD4AC0D},
-    {127, 0, 255, 1 * PI / 180, 0, 1.1, "Fine values\nNo detents", {}, 0, 0x2E86C1},
-    {127, 0, 255, 1 * PI / 180, 1, 1.1, "Fine values\nWith detents", {}, 0, 0x7D3C98},
-    {0, 0, 31, 8.225806452 * PI / 180, 2, 1.1, "Coarse values\nStrong detents", {}, 0, 0xCA6F1E},
-    {0, 0, 31, 8.225806452 * PI / 180, 0.2, 1.1, "Coarse values\nWeak detents", {}, 0, 0x17A589},
-    {0, 0, 31, 7 * PI / 180, 2.5, 0.7, "Magnetic detents", {2, 10, 21, 22, 0}, 4, 0x884EA0},
-    {0, -6, 6, 60 * PI / 180, 1, 0.55, "Return-to-center\nwith detents", {}, 0, 0x2C3E50},
+    {0, 0, 6, 30 * PI / 180, 5, 1.1, "Test screen", {}, 0, 0x000000},
 };
 static const int NUM_CONFIGS = sizeof(configs) / sizeof(configs[0]);
 
@@ -377,86 +385,54 @@ static void create_ui()
     bg = lv_obj_create(lv_scr_act());
     lv_obj_set_size(bg, SCREEN_SIZE, SCREEN_SIZE);
     lv_obj_set_pos(bg, 0, 0);
-    lv_obj_set_style_bg_color(bg, lv_color_hex(0x6B12A0), 0);
-    lv_obj_set_style_bg_opa(bg, LV_OPA_30, 0);
+    lv_obj_set_style_bg_color(bg, LV_COLORS.black, 0);
     lv_obj_set_style_border_width(bg, 0, 0);
     lv_obj_set_style_pad_all(bg, 0, 0);
     lv_obj_set_style_radius(bg, 0, 0);
     lv_obj_set_scrollbar_mode(bg, LV_SCROLLBAR_MODE_OFF);
 
-    // Outer ring (decorative)
-    lv_obj_t *ring = lv_arc_create(bg);
-    lv_obj_set_size(ring, SCREEN_SIZE - 10, SCREEN_SIZE - 10);
-    lv_obj_align(ring, LV_ALIGN_CENTER, 0, 0);
-    lv_arc_set_bg_angles(ring, 0, 360);
-    lv_arc_set_range(ring, 0, 100);
-    lv_arc_set_value(ring, 0);
-    lv_obj_clear_flag(ring, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_remove_style(ring, NULL, LV_PART_KNOB);
-    lv_obj_set_style_arc_width(ring, 2, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(ring, lv_color_hex(0x444444), LV_PART_MAIN);
-    lv_obj_set_style_arc_opa(ring, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_arc_width(ring, 0, LV_PART_INDICATOR);
-
     // Indicator arc (shows position progress)
     indicator_arc = lv_arc_create(bg);
-    lv_obj_set_size(indicator_arc, SCREEN_SIZE - 40, SCREEN_SIZE - 40);
+    lv_obj_set_size(indicator_arc, SCREEN_SIZE - 50, SCREEN_SIZE - 50);
     lv_obj_align(indicator_arc, LV_ALIGN_CENTER, 0, 0);
-    lv_arc_set_bg_angles(indicator_arc, 135, 45); // bottom-left to bottom-right
+    lv_arc_set_bg_angles(indicator_arc, 90, 3*90); // bottom to top
     lv_arc_set_range(indicator_arc, 0, 100);
     lv_arc_set_value(indicator_arc, 0);
     lv_obj_clear_flag(indicator_arc, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_remove_style(indicator_arc, NULL, LV_PART_KNOB);
-    lv_obj_set_style_arc_width(indicator_arc, 12, LV_PART_MAIN);
-    lv_obj_set_style_arc_color(indicator_arc, lv_color_hex(0x333333), LV_PART_MAIN);
+    lv_obj_set_style_arc_width(indicator_arc, 40, LV_PART_MAIN);
+    lv_obj_set_style_arc_color(indicator_arc, LV_COLORS.gray, LV_PART_MAIN);
     lv_obj_set_style_arc_opa(indicator_arc, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_arc_width(indicator_arc, 12, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_color(indicator_arc, lv_color_hex(0x5DADE2), LV_PART_INDICATOR);
+    lv_obj_set_style_arc_width(indicator_arc, 40, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_color(indicator_arc, LV_COLORS.blue, LV_PART_INDICATOR);
     lv_obj_set_style_arc_rounded(indicator_arc, true, LV_PART_INDICATOR);
 
     // Position label (large number)
     position_label = lv_label_create(bg);
     lv_obj_set_style_text_font(position_label, &lv_font_montserrat_48, 0);
-    lv_obj_set_style_text_color(position_label, lv_color_white(), 0);
+    lv_obj_set_style_text_color(position_label, LV_COLORS.white, 0);
     lv_obj_align(position_label, LV_ALIGN_CENTER, 0, -20);
     lv_label_set_text(position_label, "0");
 
     // Config name label
     config_label = lv_label_create(bg);
     lv_obj_set_style_text_font(config_label, &lv_font_montserrat_16, 0);
-    lv_obj_set_style_text_color(config_label, lv_color_hex(0xBBBBBB), 0);
+    lv_obj_set_style_text_color(config_label, LV_COLORS.white, 0);
     lv_obj_set_style_text_align(config_label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_width(config_label, SCREEN_SIZE - 100);
     lv_obj_align(config_label, LV_ALIGN_CENTER, 0, 40);
     lv_label_set_text(config_label, "Unbounded\nNo detents");
 
-    // "Tap to switch" hint
-    lv_obj_t *hint = lv_label_create(bg);
-    lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(hint, lv_color_hex(0x666666), 0);
-    lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(hint, LV_ALIGN_CENTER, 0, 160);
-    lv_label_set_text(hint, "Tap center to switch mode\nSwipe edge to rotate");
-
     // Dot indicator (position marker on the arc)
     dot_indicator = lv_obj_create(bg);
-    lv_obj_set_size(dot_indicator, 16, 16);
+    lv_obj_set_size(dot_indicator, 40, 40);
     lv_obj_set_style_radius(dot_indicator, LV_RADIUS_CIRCLE, 0);
-    lv_obj_set_style_bg_color(dot_indicator, lv_color_hex(0x5DADE2), 0);
+    lv_obj_set_style_bg_color(dot_indicator, LV_COLORS.blue, 0);
     lv_obj_set_style_bg_opa(dot_indicator, LV_OPA_COVER, 0);
     lv_obj_set_style_border_width(dot_indicator, 2, 0);
-    lv_obj_set_style_border_color(dot_indicator, lv_color_white(), 0);
+    lv_obj_set_style_border_color(dot_indicator, LV_COLORS.white, 0);
     lv_obj_clear_flag(dot_indicator, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_set_scrollbar_mode(dot_indicator, LV_SCROLLBAR_MODE_OFF);
-
-    // Config index indicator
-    lv_obj_t *idx_label = lv_label_create(bg);
-    lv_obj_set_style_text_font(idx_label, &lv_font_montserrat_14, 0);
-    lv_obj_set_style_text_color(idx_label, lv_color_hex(0x555555), 0);
-    lv_obj_align(idx_label, LV_ALIGN_CENTER, 0, -100);
-
-    // Store the index label for later update (use user_data)
-    lv_obj_set_user_data(bg, idx_label);
 }
 
 // ── Arduino entry points ──
